@@ -1,6 +1,3 @@
-# This workflow will install Python dependencies, run tests and lint with a single version of Python
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
-
 name: Python application
 
 on:
@@ -37,3 +34,16 @@ jobs:
     - name: Test with pytest
       run: |
         pytest
+        # Aggiungi qui il codice per inviare il risultato al webhook
+        echo "::set-output name=tests_passed::$(pytest --collect-only | grep 'collected ' | awk '{print $2}')"
+
+  notify:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Send test results to webhook
+      uses: distributhor/webhook-action@v2
+      with:
+        url: ${{ secrets.TEST_PASSED }}
+        method: POST
+        body: '{"tests_passed": "${{ needs.build.outputs.tests_passed }}"}'
